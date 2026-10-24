@@ -25,15 +25,15 @@ jobs:
           --health-retries 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 25
@@ -56,7 +56,7 @@ jobs:
           DB_PASSWORD: postgres
         run: ./mvnw -B package
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: app
           path: backend/target/flight-tracker-*.jar
@@ -68,7 +68,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: app
 
