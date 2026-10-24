@@ -2,6 +2,8 @@
 
 **Live site: https://chicago-sky-tracker.canadacentral.cloudapp.azure.com**
 
+![Live map of aircraft over the Chicago area, colored by altitude](docs/screenshot.png)
+
 A live map of every aircraft flying over the Chicago area, plus the history to answer questions like
 **"what flew over my house today?"** and **"when is O'Hare's airspace busiest?"**
 
