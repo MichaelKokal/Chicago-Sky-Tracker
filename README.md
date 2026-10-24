@@ -23,6 +23,10 @@ OpenSky API ──► Java poller (Spring Boot, scheduled) ──► PostgreSQL 
 - **Storage**: one row per position report. A unique key on (aircraft, timestamp) means a report that shows up in two polls is only stored once, and each poll is saved as a single batched transaction.
 - **Location search**: "within 2 km of this point" uses Postgres's `earthdistance` extension with a GiST index, so it only looks at nearby rows instead of measuring the distance to every stored position.
 - **Airline names**: callsigns like `UAL123` are matched to airline names with a regular expression in SQL and a lookup table.
+- **Automatic cleanup**: at 30 second polling the app collects about 400,000 positions (~120 MB) a day. A nightly job keeps
+  every position for 7 days, thins older data to one position per aircraft every 2 minutes (about 4× smaller), and deletes
+  anything older than 90 days. It works one hour of data at a time in short transactions so it never blocks the poller,
+  and it saves its progress so a missed night is caught up on the next run. All three windows are configurable.
 - **Database changes** are versioned with Flyway migrations (`backend/src/main/resources/db/migration`).
 
 ## Tech stack
@@ -71,6 +75,15 @@ OpenSky API ──► Java poller (Spring Boot, scheduled) ──► PostgreSQL 
    npm run dev
    ```
 5. Open http://localhost:5180.
+
+### Tests
+
+The tests run against a separate database so they never touch collected data:
+```
+createdb -U postgres flight_tracker_test
+cd backend
+./mvnw test
+```
 
 ## Data credits
 
