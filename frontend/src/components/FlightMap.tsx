@@ -46,9 +46,15 @@ export function FlightMap({ planes, selected, track, onSelect, pin, onMapClick }
 
   return (
     <MapContainer center={CHICAGO} zoom={9} className="map" zoomControl={false}>
+      {/* Esri's dark gray basemap: free, no API key, with place names drawn as a separate layer on top. */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        maxNativeZoom={16}
+      />
+      <TileLayer
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+        maxNativeZoom={16}
       />
       <ClickToPick onPick={onMapClick} />
       {trackLine.length > 1 && <Polyline positions={trackLine} pathOptions={{ color: '#38bdf8', weight: 3, opacity: 0.8 }} />}

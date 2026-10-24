@@ -89,4 +89,4 @@ cd backend
 
 ## Data credits
 
-Flight data from [The OpenSky Network](https://opensky-network.org). Map tiles © OpenStreetMap contributors, © CARTO.
+Flight data from [The OpenSky Network](https://opensky-network.org). Map tiles © Esri (Esri, HERE, Garmin, © OpenStreetMap contributors).
