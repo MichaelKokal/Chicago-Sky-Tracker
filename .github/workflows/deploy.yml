@@ -1,0 +1,96 @@
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flight_tracker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      - name: Build the website
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      # The Java app serves the website itself, so the built files go inside it.
+      - name: Bundle the website into the backend
+        run: cp -r frontend/dist/. backend/src/main/resources/static/
+
+      - name: Test and package the backend
+        working-directory: backend
+        env:
+          DB_PASSWORD: postgres
+        run: ./mvnw -B package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: backend/target/flight-tracker-*.jar
+          retention-days: 7
+
+  deploy:
+    needs: build
+    # Only deploy from main, and only once a server has been set up (see deploy/README.md).
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_HOST != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
+
+      - name: Copy the app to the server and restart it
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ vars.DEPLOY_HOST }}
+          USER: ${{ vars.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+          scp flight-tracker-*.jar "$USER@$HOST:/tmp/app.jar"
+          ssh "$USER@$HOST" 'sudo install -o skytracker -g skytracker -m 644 /tmp/app.jar /opt/chicago-sky-tracker/app.jar && sudo systemctl restart chicago-sky-tracker'
+
+      - name: Check the site is up
+        env:
+          HOST: ${{ vars.DEPLOY_PUBLIC_URL }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "$HOST/actuator/health" | grep -q UP; then echo "Site is up"; exit 0; fi
+            sleep 5
+          done
+          echo "Site did not come back up"; exit 1

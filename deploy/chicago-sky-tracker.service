@@ -1,0 +1,16 @@
+[Unit]
+Description=Chicago Sky Tracker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=skytracker
+WorkingDirectory=/opt/chicago-sky-tracker
+EnvironmentFile=/etc/chicago-sky-tracker/app.env
+# Keep memory use small so Java and Postgres fit on a 1 GB server.
+ExecStart=/usr/bin/java -Xmx384m -XX:+UseSerialGC -jar /opt/chicago-sky-tracker/app.jar
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
