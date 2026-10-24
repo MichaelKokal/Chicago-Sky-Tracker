@@ -14,6 +14,7 @@ Visitor ──HTTPS──► Caddy ──► Spring Boot (serves the website and
 ## Setting up a new server
 
 1. Create an Ubuntu 24.04 server with ports 22, 80 and 443 open, and point a domain name at it.
+   (The live site runs on an Azure B2pts v2 ARM server: 2 CPUs, 1 GB RAM, using the free `cloudapp.azure.com` address.)
 2. Copy this folder to the server and run:
    ```
    sudo DOMAIN=your.domain.com bash setup-server.sh

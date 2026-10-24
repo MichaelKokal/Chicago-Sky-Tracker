@@ -5,7 +5,7 @@
 # Usage: sudo DOMAIN=your.domain.com bash setup-server.sh
 set -euo pipefail
 
-: "${DOMAIN:?Set DOMAIN to the server's web address}"
+: "${DOMAIN:?Set DOMAIN to the web address of the server}"
 
 APP_DIR=/opt/chicago-sky-tracker
 CONFIG_DIR=/etc/chicago-sky-tracker
