@@ -12,7 +12,7 @@ position report to PostgreSQL, and serves search and stats endpoints to a React 
 
 ## Features
 
-- **Live map**- every plane in the area, pointed in the direction it's flying and colored by altitude. Updates every 10 seconds.
+- **Live map**: every plane in the area, pointed in the direction it's flying and colored by altitude. Updates every 10 seconds.
 - **Flight paths**: click a plane to see its altitude, speed and climb rate, and the route it has flown over the last 6 hours.
 - **Over my house**: type an address or click the map to see every aircraft that passed within a chosen radius, with how close and how high each one was.
 - **Stats**: total positions recorded, busiest hours of the day, and top airlines.
