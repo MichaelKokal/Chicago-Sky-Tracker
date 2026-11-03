@@ -1,26 +1,25 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useMemo } from 'react'
-import { Circle, MapContainer, Marker, Polyline, TileLayer, useMapEvents } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import { Circle, MapContainer, Marker, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import { AIRPORTS, type Airport } from '../airports'
 import type { LivePlane, TrackPoint } from '../api'
+import type { Clock } from '../clock'
 import { altitudeColor } from '../format'
+import type { MapStyle } from '../settings'
+import { PlaneLayer } from './PlaneLayer'
 
 const CHICAGO: [number, number] = [41.9, -87.8]
 
-const PLANE_PATH =
-  'M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z'
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services'
+const ESRI_CREDIT =
+  'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, Maxar, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
-function planeIcon(plane: LivePlane, selected: boolean) {
-  const color = altitudeColor(plane.altitudeM, plane.onGround)
-  const size = selected ? 30 : 22
-  return L.divIcon({
-    className: 'plane-icon',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="transform: rotate(${plane.headingDeg ?? 0}deg)">
-      <path d="${PLANE_PATH}" fill="${color}" stroke="${selected ? '#fff' : '#0f172a'}" stroke-width="${selected ? 1.5 : 0.8}"/>
-    </svg>`,
-  })
+/** Esri's free basemaps (no API key), each with place names drawn as a separate layer on top. */
+const BASEMAPS: Record<MapStyle, { base: string; labels: string }> = {
+  dark: { base: 'Canvas/World_Dark_Gray_Base', labels: 'Canvas/World_Dark_Gray_Reference' },
+  light: { base: 'Canvas/World_Light_Gray_Base', labels: 'Canvas/World_Light_Gray_Reference' },
+  satellite: { base: 'World_Imagery', labels: 'Reference/World_Boundaries_and_Places' },
 }
 
 function ClickToPick({ onPick }: { onPick?: (lat: number, lon: number) => void }) {
@@ -32,32 +31,91 @@ function ClickToPick({ onPick }: { onPick?: (lat: number, lon: number) => void }
   return null
 }
 
+/** Flies the map to a point whenever a new focus request comes in (search results, shared links). */
+function FocusOn({ focus }: { focus: Focus | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (focus) map.flyTo([focus.lat, focus.lon], Math.max(map.getZoom(), focus.zoom), { duration: 1.2 })
+  }, [map, focus])
+  return null
+}
+
+/** Dragging the map means you want to look around, not keep chasing the selected plane. */
+function StopFollowOnDrag({ onDrag }: { onDrag: () => void }) {
+  useMapEvents({ dragstart: onDrag })
+  return null
+}
+
+/** The flown path, split into pieces colored by altitude, like the planes themselves. */
+function TrackLine({ track }: { track: TrackPoint[] }) {
+  const segments = useMemo(() => {
+    const result: { color: string; points: [number, number][] }[] = []
+    for (const point of track) {
+      const color = altitudeColor(point.altitudeM, point.onGround)
+      const latLng: [number, number] = [point.latitude, point.longitude]
+      const last = result[result.length - 1]
+      if (last && last.color === color) {
+        last.points.push(latLng)
+      } else {
+        // Start each piece at the end of the last one so the line has no gaps.
+        result.push({ color, points: last ? [last.points[last.points.length - 1], latLng] : [latLng] })
+      }
+    }
+    return result.filter((s) => s.points.length > 1)
+  }, [track])
+
+  return (
+    <>
+      {segments.map((s, i) => (
+        <Polyline key={i} positions={s.points} pathOptions={{ color: s.color, weight: 3, opacity: 0.9 }} />
+      ))}
+    </>
+  )
+}
+
+function airportIcon(airport: Airport, active: boolean) {
+  return L.divIcon({
+    className: `airport-icon${airport.major ? ' major' : ''}${active ? ' active' : ''}`,
+    iconSize: [0, 0],
+    html: `<span class="airport-dot"></span><span class="airport-code">${airport.code}</span>`,
+  })
+}
+
+export interface Focus {
+  lat: number
+  lon: number
+  zoom: number
+}
+
 interface Props {
   planes: LivePlane[]
+  clock: Clock
   selected: string | null
   track: TrackPoint[]
   onSelect: (icao24: string) => void
+  follow: boolean
+  onStopFollowing: () => void
+  labels: boolean
+  mapStyle: MapStyle
+  isFaded: (plane: LivePlane) => boolean
+  airport: string | null
+  onSelectAirport: (code: string) => void
+  focus: Focus | null
   pin?: { lat: number; lon: number; radiusKm: number } | null
   onMapClick?: (lat: number, lon: number) => void
 }
 
-export function FlightMap({ planes, selected, track, onSelect, pin, onMapClick }: Props) {
-  const trackLine = useMemo(() => track.map((p) => [p.latitude, p.longitude] as [number, number]), [track])
+export function FlightMap(props: Props) {
+  const { planes, clock, selected, track, onSelect, follow, labels, mapStyle, isFaded, pin, onMapClick } = props
+  const basemap = BASEMAPS[mapStyle]
 
   return (
-    <MapContainer center={CHICAGO} zoom={9} className="map" zoomControl={false}>
-      {/* Esri's dark gray basemap: free, no API key, with place names drawn as a separate layer on top. */}
-      <TileLayer
-        attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-        maxNativeZoom={16}
-      />
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-        maxNativeZoom={16}
-      />
+    <MapContainer center={CHICAGO} zoom={9} className={`map map-${mapStyle}`} zoomControl={false}>
+      <TileLayer key={basemap.base} attribution={ESRI_CREDIT} url={`${ESRI}/${basemap.base}/MapServer/tile/{z}/{y}/{x}`} maxNativeZoom={16} />
+      <TileLayer key={basemap.labels} url={`${ESRI}/${basemap.labels}/MapServer/tile/{z}/{y}/{x}`} maxNativeZoom={16} />
       <ClickToPick onPick={onMapClick} />
-      {trackLine.length > 1 && <Polyline positions={trackLine} pathOptions={{ color: '#38bdf8', weight: 3, opacity: 0.8 }} />}
+      <StopFollowOnDrag onDrag={props.onStopFollowing} />
+      <FocusOn focus={props.focus} />
       {pin && (
         <Circle
           center={[pin.lat, pin.lon]}
@@ -65,15 +123,24 @@ export function FlightMap({ planes, selected, track, onSelect, pin, onMapClick }
           pathOptions={{ color: '#f472b6', fillColor: '#f472b6', fillOpacity: 0.12, weight: 2 }}
         />
       )}
-      {planes.map((plane) => (
+      {AIRPORTS.map((airport) => (
         <Marker
-          key={plane.icao24}
-          position={[plane.latitude, plane.longitude]}
-          icon={planeIcon(plane, plane.icao24 === selected)}
-          zIndexOffset={plane.icao24 === selected ? 1000 : 0}
-          eventHandlers={{ click: () => onSelect(plane.icao24) }}
+          key={airport.code}
+          position={[airport.lat, airport.lon]}
+          icon={airportIcon(airport, airport.code === props.airport)}
+          eventHandlers={{ click: () => props.onSelectAirport(airport.code) }}
         />
       ))}
+      <TrackLine track={track} />
+      <PlaneLayer
+        planes={planes}
+        clock={clock}
+        selected={selected}
+        follow={follow}
+        labels={labels}
+        isFaded={isFaded}
+        onSelect={onSelect}
+      />
     </MapContainer>
   )
 }

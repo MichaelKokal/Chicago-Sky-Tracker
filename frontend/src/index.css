@@ -120,6 +120,7 @@ select {
 }
 
 .tabs button {
+  white-space: nowrap;
   flex: 1;
   padding: 8px 6px;
   border: none;
@@ -463,5 +464,504 @@ select {
     bottom: 8px;
     width: auto;
     max-height: 55vh;
+  }
+}
+
+/* Planes */
+.plane-icon {
+  overflow: visible;
+}
+
+.plane-icon.faded {
+  opacity: 0.25;
+}
+
+.plane-icon.alert svg {
+  animation: alert-pulse 1s ease-in-out infinite;
+}
+
+@keyframes alert-pulse {
+  50% {
+    filter: drop-shadow(0 0 6px #ef4444);
+  }
+}
+
+.plane-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 2px);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.plane-icon.selected .plane-label {
+  background: var(--accent);
+  color: #0b1120;
+}
+
+/* Airports */
+.airport-icon {
+  background: none;
+  border: none;
+}
+
+.airport-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  left: -4px;
+  top: -4px;
+  border-radius: 50%;
+  background: #0b1120;
+  border: 2px solid #cbd5e1;
+  cursor: pointer;
+}
+
+.airport-icon.major .airport-dot {
+  width: 12px;
+  height: 12px;
+  left: -6px;
+  top: -6px;
+}
+
+.airport-icon.active .airport-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.airport-code {
+  position: absolute;
+  left: 8px;
+  top: -8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  text-shadow: 0 1px 2px #000;
+  cursor: pointer;
+}
+
+/* Header and search */
+.brand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.replay-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #fbbf24;
+}
+
+.search {
+  position: relative;
+  margin-top: 12px;
+}
+
+.search input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.search input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.search-results button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-results button.active {
+  background: var(--bg);
+}
+
+.search-results .callsign {
+  font-weight: 600;
+}
+
+.search-results .empty {
+  padding: 8px;
+}
+
+/* Buttons and controls */
+.toggle {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  border-color: var(--accent);
+}
+
+.toggle.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1120;
+  font-weight: 600;
+}
+
+.toggle.small {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.segmented button {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.segmented button.active {
+  background: var(--card);
+  color: var(--text);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+}
+
+.controls.wrap {
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.chip.on {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(56, 189, 248, 0.12);
+}
+
+/* Emergencies */
+.alert-banner {
+  display: block;
+  width: 100%;
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid #ef4444;
+  background: rgba(239, 68, 68, 0.14);
+  color: #fecaca;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-align: left;
+}
+
+.alert-banner.clickable {
+  margin: 0;
+  cursor: pointer;
+}
+
+.plane-details.alert {
+  border-color: #ef4444;
+}
+
+/* Flight details */
+.big-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0 12px;
+}
+
+.big-facts > div {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.profile {
+  margin-bottom: 4px;
+}
+
+.profile-key {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.profile-key > span {
+  white-space: nowrap;
+}
+
+.profile-key {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.profile-readout {
+  margin-left: auto;
+}
+
+.swatch.altitude {
+  background: #38bdf8;
+}
+
+.swatch.speed {
+  background: #fbbf24;
+}
+
+.profile-chart {
+  display: block;
+  width: 100%;
+  height: 96px;
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.profile-area {
+  fill: rgba(56, 189, 248, 0.18);
+}
+
+.profile-altitude,
+.profile-speed,
+.profile-cursor {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.profile-altitude {
+  stroke: #38bdf8;
+  stroke-width: 2;
+}
+
+.profile-speed {
+  stroke: #fbbf24;
+  stroke-width: 1.5;
+}
+
+.profile-cursor {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.profile-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+/* Airport board */
+.card h3 .count {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.board {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.board button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  text-align: left;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.board button:hover {
+  border-color: var(--accent);
+}
+
+.board .callsign {
+  font-weight: 600;
+}
+
+.board .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board .meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Playback */
+.playback {
+  position: absolute;
+  z-index: 1000;
+  left: 392px;
+  right: 16px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.play-button {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #fbbf24;
+  color: #0b1120;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.playback-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.playback-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.playback-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playback-options select,
+.playback-options input {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+.timeline {
+  width: 100%;
+  margin: 8px 0 0;
+  accent-color: #fbbf24;
+}
+
+.playback-axis {
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 640px) {
+  .playback {
+    top: 8px;
+    bottom: auto;
+    left: 8px;
+    right: 8px;
+    padding: 10px;
   }
 }

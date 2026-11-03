@@ -11,6 +11,9 @@ export interface LivePlane {
   headingDeg: number | null
   verticalRateMs: number | null
   onGround: boolean
+  squawk: string | null
+  /** ADS-B emitter category (size class). 0 or 1 when the aircraft doesn't report one. */
+  category: number | null
 }
 
 export interface TrackPoint {
@@ -18,6 +21,7 @@ export interface TrackPoint {
   latitude: number
   longitude: number
   altitudeM: number | null
+  velocityMs: number | null
   onGround: boolean
 }
 
@@ -57,7 +61,9 @@ async function get<T>(path: string): Promise<T> {
 
 export const api = {
   live: () => get<LivePlane[]>('/api/flights/live'),
-  track: (icao24: string, hours = 6) => get<TrackPoint[]>(`/api/flights/${icao24}/track?hours=${hours}`),
+  playback: (at: Date) => get<LivePlane[]>(`/api/flights/playback?at=${at.toISOString()}`),
+  track: (icao24: string, until?: Date, hours = 6) =>
+    get<TrackPoint[]>(`/api/flights/${icao24}/track?hours=${hours}${until ? `&until=${until.toISOString()}` : ''}`),
   overhead: (lat: number, lon: number, radiusKm: number, hours: number) =>
     get<Overhead[]>(`/api/overhead?lat=${lat}&lon=${lon}&radiusKm=${radiusKm}&hours=${hours}`),
   summary: () => get<Summary>('/api/stats/summary'),

@@ -8,7 +8,8 @@ export default defineConfig({
     port: 5180,
     // Send API calls to the Spring Boot backend during development.
     proxy: {
-      '/api': 'http://localhost:8080',
+      // Set API_TARGET to try the frontend against another server, like the live site.
+      '/api': { target: process.env.API_TARGET ?? 'http://localhost:8080', changeOrigin: true },
     },
   },
 })

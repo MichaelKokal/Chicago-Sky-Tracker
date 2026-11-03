@@ -14,5 +14,7 @@ public record LivePlane(
 		Double velocityMs,
 		Double headingDeg,
 		Double verticalRateMs,
-		boolean onGround) {
+		boolean onGround,
+		String squawk,
+		Integer category) {
 }

@@ -1,6 +1,8 @@
 package com.michaelkokaly.flighttracker.api;
 
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -22,33 +24,44 @@ public class FlightQueries {
 
 	/** The most recent position of every aircraft heard from within the given window. */
 	public List<LivePlane> livePlanes(Duration maxAge) {
+		return planesAt(Instant.now(), maxAge);
+	}
+
+	/**
+	 * Where every aircraft was at a moment in time: each one's latest position in the window
+	 * leading up to that moment. With a moment in the past, this powers playback.
+	 */
+	public List<LivePlane> planesAt(Instant at, Duration window) {
 		return jdbc.sql("""
 				SELECT DISTINCT ON (p.icao24)
 				       p.icao24, p.callsign, al.name AS airline, a.origin_country, p.observed_at,
 				       p.latitude, p.longitude, COALESCE(p.geo_altitude_m, p.baro_altitude_m) AS altitude_m,
-				       p.velocity_ms, p.heading_deg, p.vertical_rate_ms, p.on_ground
+				       p.velocity_ms, p.heading_deg, p.vertical_rate_ms, p.on_ground, p.squawk, p.category
 				FROM positions p
 				JOIN aircraft a ON a.icao24 = p.icao24
 				""" + AIRLINE_JOIN + """
-				WHERE p.observed_at > now() - make_interval(secs => :seconds)
+				WHERE p.observed_at > :from AND p.observed_at <= :at
 				ORDER BY p.icao24, p.observed_at DESC
 				""")
-				.param("seconds", maxAge.toSeconds())
+				.param("from", Timestamp.from(at.minus(window)))
+				.param("at", Timestamp.from(at))
 				.query(LivePlane.class)
 				.list();
 	}
 
-	/** Every stored position for one aircraft, oldest first, so it can be drawn as a line. */
-	public List<TrackPoint> track(String icao24, Duration lookback) {
+	/** Every stored position for one aircraft in the hours before a moment, oldest first, so it can be drawn as a line. */
+	public List<TrackPoint> track(String icao24, Instant until, Duration lookback) {
 		return jdbc.sql("""
 				SELECT observed_at, latitude, longitude,
-				       COALESCE(geo_altitude_m, baro_altitude_m) AS altitude_m, on_ground
+				       COALESCE(geo_altitude_m, baro_altitude_m) AS altitude_m, velocity_ms, on_ground
 				FROM positions
-				WHERE icao24 = :icao24 AND observed_at > now() - make_interval(secs => :seconds)
+				WHERE icao24 = :icao24
+				  AND observed_at > :from AND observed_at <= :until
 				ORDER BY observed_at
 				""")
 				.param("icao24", icao24)
-				.param("seconds", lookback.toSeconds())
+				.param("from", Timestamp.from(until.minus(lookback)))
+				.param("until", Timestamp.from(until))
 				.query(TrackPoint.class)
 				.list();
 	}
